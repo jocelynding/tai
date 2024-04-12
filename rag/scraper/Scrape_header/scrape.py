@@ -17,13 +17,13 @@ def main():
     """
     # TODO
     # ROS
-    url = "https://wiki.ros.org/ROS/Tutorials/"
-    root = "https://wiki.ros.org/ROS/Tutorials/"
-    root_regex = r"^https://wiki.ros.org/ROS/Tutorials/"
-    root_filename = "ROS"
-    content_tags = [
-        ('div', {'id': 'page', 'lang': 'en', 'dir': 'ltr'}),
-    ]
+    # url = "https://wiki.ros.org/ROS/Tutorials/"
+    # root = "https://wiki.ros.org/ROS/Tutorials/"
+    # root_regex = r"^https://wiki.ros.org/ROS/Tutorials/"
+    # root_filename = "ROS"
+    # content_tags = [
+    #     ('div', {'id': 'page', 'lang': 'en', 'dir': 'ltr'}),
+    # ]
 
     # opencv
     # url = "https://docs.opencv.org/4.x/d6/d00/tutorial_py_root.html"
@@ -35,13 +35,13 @@ def main():
     # ]
 
     # turtlebot3
-    # url = "https://emanual.robotis.com/docs/en/platform/turtlebot3/overview/"
-    # root = "https://emanual.robotis.com/docs/en/platform/turtlebot3/"
-    # root_regex = r"^https://emanual.robotis.com/docs/en/platform/turtlebot3/"
-    # root_filename = "turtlebot3"
-    # content_tags = [
-    #     ('div', {'class': 'archive', 'id': 'archive'}),
-    # ]
+    url = "https://emanual.robotis.com/docs/en/platform/turtlebot3/overview/"
+    root = "https://emanual.robotis.com/docs/en/platform/turtlebot3/"
+    root_regex = r"^https://emanual.robotis.com/docs/en/platform/turtlebot3/"
+    root_filename = "turtlebot3"
+    content_tags = [
+        ('div', {'class': 'archive', 'id': 'archive'}),
+    ]
 
     # openai
     # url = "https://platform.openai.com/docs/introduction"
