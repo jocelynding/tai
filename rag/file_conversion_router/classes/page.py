@@ -166,6 +166,8 @@ class Page:
 
         # Handle the last segment
         all_headers = [header[0] for header in self.segments]
+        if not all_headers:
+            return
         if (header, level) == all_headers[-1]:
             page_toc = ""
             page_path = ""
