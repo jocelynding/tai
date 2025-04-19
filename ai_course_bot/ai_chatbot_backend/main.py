@@ -1,11 +1,10 @@
 import logging
 
 import uvicorn
-from fastapi import FastAPI
-from starlette.responses import RedirectResponse
-
 from app.api.v1.router import router as v1_router
 from app.v1.openai_mock import router as openapi_mock_router
+from fastapi import FastAPI
+from starlette.responses import RedirectResponse
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,7 +20,7 @@ app.include_router(v1_router, prefix="/v1", tags=["v1"])
 
 @app.get("/")
 def root():
-    response = RedirectResponse(url='/docs')
+    response = RedirectResponse(url="/docs")
     return response
 
 

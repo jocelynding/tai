@@ -1,5 +1,4 @@
 import pytest
-
 from app.api.v1.endpoints.completions import extract_text_and_references
 
 
@@ -12,7 +11,9 @@ from app.api.v1.endpoints.completions import extract_text_and_references
         ("/v1/completions", True, [], False),
     ],
 )
-def test_create_completion(client_unit, tai_trivia_question, endpoint, stream, expected_ref, rag):
+def test_create_completion(
+    client_unit, tai_trivia_question, endpoint, stream, expected_ref, rag
+):
     payload = {
         "course": "CS61A",
         "messages": [{"role": "user", "content": tai_trivia_question}],
@@ -29,7 +30,9 @@ def test_create_completion(client_unit, tai_trivia_question, endpoint, stream, e
         content, references = extract_text_and_references(response.iter_lines())
         assert content, "Expected non-empty content"
         assert references is not None, "Expected references in the final message"
-        assert isinstance(references, list), "Expected references to be a list in the final message"
+        assert isinstance(
+            references, list
+        ), "Expected references to be a list in the final message"
     else:
         # For non-streaming responses, decode the JSON.
         data = response.json()
@@ -37,15 +40,19 @@ def test_create_completion(client_unit, tai_trivia_question, endpoint, stream, e
         assert "references" in data
         content = data["content"]
         references = data["references"]
-        assert isinstance(references, list), "Expected references to be a list in the final message"
+        assert isinstance(
+            references, list
+        ), "Expected references to be a list in the final message"
 
     # Common assertions for both streaming and non-streaming responses.
     assert "uc berkeley" in content.lower()
     assert "tai" in content.lower()
     assert "teaching" in content.lower()
-    if rag: 
-    # Additional assertions for provided extra keywords.
+    if rag:
+        # Additional assertions for provided extra keywords.
         for keyword in expected_ref:
-            assert any(keyword in ref for ref in references), f"Expected keyword '{keyword}' in references"
+            assert any(
+                keyword in ref for ref in references
+            ), f"Expected keyword '{keyword}' in references"
     else:
         assert not references, "Expected no references"

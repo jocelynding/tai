@@ -1,7 +1,8 @@
-import yaml
-from typing import List
-from dataclasses import dataclass
 from abc import ABC
+from dataclasses import dataclass
+from typing import List
+
+import yaml
 
 
 @dataclass
@@ -59,7 +60,7 @@ class ScraperConfig:
                     base_url=t.get("root", ""),
                     root_folder=self.root_folder,
                     driver_type=t.get("driver_type", "requests"),
-                    log_folder=self.log_folder
+                    log_folder=self.log_folder,
                 )
                 tasks.append(obj)
 
@@ -72,7 +73,7 @@ class ScraperConfig:
                     is_local=t.get("local", False),
                     root_folder=self.root_folder,
                     log_folder=self.log_folder,
-                    start_url=t.get("url", "")
+                    start_url=t.get("url", ""),
                 )
                 tasks.append(obj)
             else:

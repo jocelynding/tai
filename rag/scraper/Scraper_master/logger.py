@@ -1,14 +1,14 @@
-import os
 import logging
+import os
 from pathlib import Path
 
-logger = logging.getLogger('scraper')
+logger = logging.getLogger("scraper")
 logger.setLevel(logging.INFO)
 
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
 
-def set_up_logger(logger, output_path, mode='w'):
+def set_up_logger(logger, output_path, mode="w"):
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
 

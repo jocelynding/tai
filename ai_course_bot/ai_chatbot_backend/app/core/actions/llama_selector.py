@@ -1,18 +1,19 @@
+import json
 import os
 import pickle
-import numpy as np
-from dotenv import load_dotenv
-from FlagEmbedding import BGEM3FlagModel
-import transformers
-import torch
-from threading import Thread
-from typing import List, Union, Any
-from app.core.models.chat_completion import Message as ROARChatCompletionMessage
-from pydantic import BaseModel
+import sqlite3
 import threading
 import urllib.parse
-import json
-import sqlite3
+from threading import Thread
+from typing import Any, List, Union
+
+import numpy as np
+import torch
+import transformers
+from app.core.models.chat_completion import Message as ROARChatCompletionMessage
+from dotenv import load_dotenv
+from FlagEmbedding import BGEM3FlagModel
+from pydantic import BaseModel
 
 # Configuration Flags
 SQLDB = False  # Set to True if using SQLDB for embeddings
@@ -29,7 +30,7 @@ class Message(BaseModel):
 load_dotenv()
 
 # Initialize Embedding Model
-embedding_model = BGEM3FlagModel('BAAI/bge-m3', use_fp16=True)
+embedding_model = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
 
 # Initialize Transformer Model and Tokenizer
 model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
@@ -46,7 +47,9 @@ pipeline = transformers.pipeline(
 lock = threading.Lock()
 
 
-def prompt_generator(messages: List[Message], streamer_iterator: transformers.TextIteratorStreamer):
+def prompt_generator(
+    messages: List[Message], streamer_iterator: transformers.TextIteratorStreamer
+):
     """
     Generates prompts for the model in a separate thread.
 
@@ -57,12 +60,10 @@ def prompt_generator(messages: List[Message], streamer_iterator: transformers.Te
     with lock:
         terminators = [
             pipeline.tokenizer.eos_token_id,
-            pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")
+            pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>"),
         ]
         prompt = pipeline.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True
+            messages, tokenize=False, add_generation_prompt=True
         )
 
         pipeline(
@@ -70,16 +71,16 @@ def prompt_generator(messages: List[Message], streamer_iterator: transformers.Te
             max_new_tokens=1000,
             eos_token_id=terminators,
             do_sample=True,
-            streamer=streamer_iterator
+            streamer=streamer_iterator,
         )
 
 
 def bge_compute_score(
-        query_embedding: dict,
-        document_embeddings: List[dict],
-        weights_for_different_modes: List[float],
-        secondary_query_embedding: Any = None,
-        secondary_document_embeddings: Any = None
+    query_embedding: dict,
+    document_embeddings: List[dict],
+    weights_for_different_modes: List[float],
+    secondary_query_embedding: Any = None,
+    secondary_document_embeddings: Any = None,
 ) -> dict:
     """
     Computes scores for RAG based on different embedding modes.
@@ -95,11 +96,11 @@ def bge_compute_score(
         dict: Computed scores for each mode.
     """
     all_scores = {
-        'colbert': [],
-        'sparse': [],
-        'dense': [],
-        'sparse+dense': [],
-        'colbert+sparse+dense': [],
+        "colbert": [],
+        "sparse": [],
+        "dense": [],
+        "sparse+dense": [],
+        "colbert+sparse+dense": [],
     }
 
     if weights_for_different_modes is None:
@@ -107,31 +108,40 @@ def bge_compute_score(
         weight_sum = 3
         print("Default weights for dense, sparse, colbert are [1.0, 1.0, 1.0]")
     else:
-        assert len(weights_for_different_modes) == 3, "Weights list must have exactly 3 elements."
+        assert (
+            len(weights_for_different_modes) == 3
+        ), "Weights list must have exactly 3 elements."
         weight_sum = sum(weights_for_different_modes)
 
     for i in range(len(document_embeddings)):
-        dense_score = np.dot(query_embedding['dense_vecs'], document_embeddings[i]['dense_vecs'])
+        dense_score = np.dot(
+            query_embedding["dense_vecs"], document_embeddings[i]["dense_vecs"]
+        )
         sparse_score = embedding_model.compute_lexical_matching_score(
-            query_embedding['lexical_weights'],
-            document_embeddings[i]['lexical_weights']
+            query_embedding["lexical_weights"],
+            document_embeddings[i]["lexical_weights"],
         )
         colbert_score = embedding_model.colbert_score(
-            query_embedding['colbert_vecs'],
-            document_embeddings[i]['colbert_vecs']
+            query_embedding["colbert_vecs"], document_embeddings[i]["colbert_vecs"]
         )
 
-        all_scores['colbert'].append(colbert_score)
-        all_scores['sparse'].append(sparse_score)
-        all_scores['dense'].append(dense_score)
-        all_scores['sparse+dense'].append(
-            (sparse_score * weights_for_different_modes[1] + dense_score * weights_for_different_modes[0]) /
-            (weights_for_different_modes[1] + weights_for_different_modes[0])
+        all_scores["colbert"].append(colbert_score)
+        all_scores["sparse"].append(sparse_score)
+        all_scores["dense"].append(dense_score)
+        all_scores["sparse+dense"].append(
+            (
+                sparse_score * weights_for_different_modes[1]
+                + dense_score * weights_for_different_modes[0]
+            )
+            / (weights_for_different_modes[1] + weights_for_different_modes[0])
         )
-        all_scores['colbert+sparse+dense'].append(
-            (colbert_score * weights_for_different_modes[2] +
-             sparse_score * weights_for_different_modes[1] +
-             dense_score * weights_for_different_modes[0]) / weight_sum
+        all_scores["colbert+sparse+dense"].append(
+            (
+                colbert_score * weights_for_different_modes[2]
+                + sparse_score * weights_for_different_modes[1]
+                + dense_score * weights_for_different_modes[0]
+            )
+            / weight_sum
         )
 
     return all_scores
@@ -148,15 +158,18 @@ def clean_path(url_path: str) -> str:
         str: Cleaned URL path.
     """
     decoded_path = urllib.parse.unquote(url_path)
-    cleaned_path = decoded_path.replace('%28', '(').replace('%29', ')').replace('%2B', '+')
-    cleaned_path = cleaned_path.replace('>', ' > ')
-    cleaned_path = cleaned_path.replace('(', ' (').replace(')', ') ')
-    cleaned_path = ' '.join(cleaned_path.split())
+    cleaned_path = (
+        decoded_path.replace("%28", "(").replace("%29", ")").replace("%2B", "+")
+    )
+    cleaned_path = cleaned_path.replace(">", " > ")
+    cleaned_path = cleaned_path.replace("(", " (").replace(")", ") ")
+    cleaned_path = " ".join(cleaned_path.split())
     return cleaned_path
 
 
-def process_references(top_docs: List[str], top_ids: List[str], top_urls: List[str], distances: List[float]) -> (
-str, List[str]):
+def process_references(
+    top_docs: List[str], top_ids: List[str], top_urls: List[str], distances: List[float]
+) -> (str, List[str]):
     """
     Processes top documents and references to generate insertion text.
 
@@ -182,10 +195,10 @@ str, List[str]):
         if distances[i] > 0.45:
             n += 1
             if top_urls[i]:
-                insert_document += f"\"\"\"Reference Number: {n}\nReference Info Path: {top_ids[i]}\nReference_Url: {top_urls[i]}\nDocument: {top_docs[i]}\"\"\"\n\n"
+                insert_document += f'"""Reference Number: {n}\nReference Info Path: {top_ids[i]}\nReference_Url: {top_urls[i]}\nDocument: {top_docs[i]}"""\n\n'
             else:
                 cleaned_path = clean_path(top_ids[i])
-                insert_document += f"\"\"\"Reference Number: {n}\nReference Info Path: {cleaned_path}\nReference_Url: NONE\nDocument: {top_docs[i]}\"\"\"\n\n"
+                insert_document += f'"""Reference Number: {n}\nReference Info Path: {cleaned_path}\nReference_Url: NONE\nDocument: {top_docs[i]}"""\n\n'
         else:
             reference.append("")
             none += 1
@@ -213,7 +226,7 @@ def perform_rag(messages: List[Message], course: str) -> Any:
         "EE 106B": "eecs106b.pkl",
         "CS 61A": "cs61a.pkl",
         "CS 294-137": "cs294.pkl",
-        "Econ 140": "Econ140.pkl"
+        "Econ 140": "Econ140.pkl",
     }
     picklefile = course_pickle_map.get(course, "Berkeley.pkl")
     current_dir = "/home/bot/localgpt/tai/ai_course_bot/ai-chatbot-backend/app/embedding/"  # Modify as needed
@@ -230,13 +243,18 @@ def perform_rag(messages: List[Message], course: str) -> Any:
         cur = db.cursor()
 
         # Encode the user message
-        query_embed = embedding_model.encode(user_message, return_dense=True, return_sparse=True,
-                                             return_colbert_vecs=True)
-        query_vector = query_embed['dense_vecs'].tolist()
+        query_embed = embedding_model.encode(
+            user_message,
+            return_dense=True,
+            return_sparse=True,
+            return_colbert_vecs=True,
+        )
+        query_vector = query_embed["dense_vecs"].tolist()
         query_vector_json = json.dumps(query_vector)
 
         # Query the embeddings database using vss_search
-        cur.execute("""
+        cur.execute(
+            """
             SELECT 
                 rowid, 
                 distance
@@ -246,14 +264,16 @@ def perform_rag(messages: List[Message], course: str) -> Any:
                 ?
             )
             LIMIT 3;
-        """, (query_vector_json,))
+        """,
+            (query_vector_json,),
+        )
 
         results = cur.fetchall()
         db.commit()
         db.close()
 
         # Connect to the main database to extract the top docs and urls
-        table_name = picklefile.replace('.pkl', '')
+        table_name = picklefile.replace(".pkl", "")
         db_name = f"{table_name}.db"
         main_db_path = os.path.join(current_dir, db_name)
         db = sqlite3.connect(main_db_path)
@@ -263,7 +283,7 @@ def perform_rag(messages: List[Message], course: str) -> Any:
         indices = [result[0] for result in results]
         distances = [result[1] for result in results]
 
-        placeholders = ','.join('?' for _ in indices)
+        placeholders = ",".join("?" for _ in indices)
         query = f"SELECT id_list, doc_list, url_list FROM {table_name} WHERE rowid IN ({placeholders})"
         cur.execute(query, indices)
         results = cur.fetchall()
@@ -279,25 +299,29 @@ def perform_rag(messages: List[Message], course: str) -> Any:
     else:
         # Picklefile implementation
         path_to_pickle = os.path.join(current_dir, picklefile)
-        with open(path_to_pickle, 'rb') as f:
+        with open(path_to_pickle, "rb") as f:
             data_loaded = pickle.load(f)
 
-        doc_list = data_loaded['doc_list']
-        id_list = data_loaded['id_list']
-        url_list = data_loaded['url_list']
-        embedding_list = data_loaded['embedding_list']
+        doc_list = data_loaded["doc_list"]
+        id_list = data_loaded["id_list"]
+        url_list = data_loaded["url_list"]
+        embedding_list = data_loaded["embedding_list"]
 
         # Encode the user message
-        query_embed = embedding_model.encode(user_message, return_dense=True, return_sparse=True,
-                                             return_colbert_vecs=True)
+        query_embed = embedding_model.encode(
+            user_message,
+            return_dense=True,
+            return_sparse=True,
+            return_colbert_vecs=True,
+        )
 
         # Compute cosine similarities
         scores = bge_compute_score(
             query_embedding=query_embed,
             document_embeddings=embedding_list,
-            weights_for_different_modes=[1, 1, 1]
+            weights_for_different_modes=[1, 1, 1],
         )
-        cosine_similarities = np.array(scores['colbert+sparse+dense'])
+        cosine_similarities = np.array(scores["colbert+sparse+dense"])
         indices = np.argsort(cosine_similarities)[::-1]
         distances = cosine_similarities[indices][:3]
 
@@ -310,33 +334,44 @@ def perform_rag(messages: List[Message], course: str) -> Any:
     print("Top URLs:", top_urls)
 
     # Process top documents and references
-    insert_document, reference = process_references(top_docs, top_ids, top_urls, distances)
+    insert_document, reference = process_references(
+        top_docs, top_ids, top_urls, distances
+    )
 
     if not insert_document or len([d for d in distances if d > 0.45]) == 0:
         print("NO REFERENCES")
-        user_message = f'Answer the instruction. If unsure of the answer, explain that there is no data in the knowledge base for the response.\n---\n{user_message}'
+        user_message = f"Answer the instruction. If unsure of the answer, explain that there is no data in the knowledge base for the response.\n---\n{user_message}"
     else:
         print("INSERT DOCUMENT:", insert_document)
-        insert_document += f'Instruction: {user_message}'
+        insert_document += f"Instruction: {user_message}"
         user_message = (
-                "Understand the reference documents and use them to answer the instruction thoroughly. "
-                "List the references used to answer the question numbered. Ex: [reference Name](URL). "
-                "Keep your answer grounded in the facts of the references.\n---\n" +
-                insert_document
+            "Understand the reference documents and use them to answer the instruction thoroughly. "
+            "List the references used to answer the question numbered. Ex: [reference Name](URL). "
+            "Keep your answer grounded in the facts of the references.\n---\n"
+            + insert_document
         )
 
     print("USER MESSAGE:", user_message)
     messages[-1].content = user_message
 
-    streamer_iterator = transformers.TextIteratorStreamer(auto_tokenizer, skip_prompt=True)
-    t = Thread(target=prompt_generator, args=(messages, streamer_iterator,))
+    streamer_iterator = transformers.TextIteratorStreamer(
+        auto_tokenizer, skip_prompt=True
+    )
+    t = Thread(
+        target=prompt_generator,
+        args=(
+            messages,
+            streamer_iterator,
+        ),
+    )
     t.start()
     response = streamer_iterator
     return response
 
 
-def perform_direct_query(messages: List[Message], stream: bool = False) -> Union[
-    str, transformers.TextIteratorStreamer]:
+def perform_direct_query(
+    messages: List[Message], stream: bool = False
+) -> Union[str, transformers.TextIteratorStreamer]:
     """
     Directly query the model without using RAG.
 
@@ -350,24 +385,25 @@ def perform_direct_query(messages: List[Message], stream: bool = False) -> Union
     formatted_messages = local_formatter(messages)
 
     if stream:
-        streamer_iterator = transformers.TextIteratorStreamer(auto_tokenizer, skip_prompt=True)
-        t = Thread(target=prompt_generator, args=(formatted_messages, streamer_iterator,))
+        streamer_iterator = transformers.TextIteratorStreamer(
+            auto_tokenizer, skip_prompt=True
+        )
+        t = Thread(
+            target=prompt_generator,
+            args=(
+                formatted_messages,
+                streamer_iterator,
+            ),
+        )
         t.start()
         return streamer_iterator
     else:
-        response = pipeline(
-            formatted_messages,
-            max_new_tokens=1000,
-            do_sample=True
-        )
-        return response[0]['generated_text']
+        response = pipeline(formatted_messages, max_new_tokens=1000, do_sample=True)
+        return response[0]["generated_text"]
 
 
 def local_selector(
-        messages: List[Message],
-        stream: bool = True,
-        rag: bool = True,
-        course: str = None
+    messages: List[Message], stream: bool = True, rag: bool = True, course: str = None
 ) -> Union[str, transformers.TextIteratorStreamer]:
     """
     Selects the appropriate model querying method based on the RAG flag.

@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings
 
 class EnvironmentEnum(str, Enum):
     """Allowed application environments."""
+
     dev = "dev"
     production = "production"
     test = "test"
@@ -14,6 +15,7 @@ class EnvironmentEnum(str, Enum):
 
 class LLMModeEnum(str, Enum):
     """Allowed LLM modes for inference."""
+
     local = "local"
     remote = "remote"
     mock = "mock"
@@ -21,13 +23,14 @@ class LLMModeEnum(str, Enum):
 
 class Settings(BaseSettings):
     """Centralized backend configuration."""
+
     environment: EnvironmentEnum = Field(
         EnvironmentEnum.dev,
-        description="The application environment: dev, production, or test"
+        description="The application environment: dev, production, or test",
     )
     llm_mode: Optional[LLMModeEnum] = Field(
         None,
-        description="LLM mode: local, remote, or mock. Defaults based on environment if not set."
+        description="LLM mode: local, remote, or mock. Defaults based on environment if not set.",
     )
     # TODO: Revise here, current deployed server seems to have a router path naming bug
     remote_model_url: str = "https://tai.berkeley.edu/api/chat"

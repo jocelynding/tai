@@ -1,18 +1,22 @@
-from typing import Tuple, List, Optional
+from typing import List, Optional, Tuple
 
 from fastapi import HTTPException, status
 
 from ..schemas.file import File, FileDetailResponse
 
 
-def get_course_files(courseId: str, folder: Optional[str], page: int, limit: int, user: dict) -> Tuple[List[File], int]:
+def get_course_files(
+    courseId: str, folder: Optional[str], page: int, limit: int, user: dict
+) -> Tuple[List[File], int]:
     """
     Return a list of files for a given course.
     Raises a 404 error if the course is not found.
     """
     # For the sake of example, assume only course IDs "CS61A" and "CS61B" exist.
     if courseId not in ["CS61A", "CS61B"]:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Course not found"
+        )
 
     # Simulated list of files
     files = [
@@ -23,7 +27,7 @@ def get_course_files(courseId: str, folder: Optional[str], page: int, limit: int
             path="/Pictures/Pic.png",
             updatedAt="2024-09-08T16:45:00Z",
             size=2048,
-            fileType="image"
+            fileType="image",
         ),
         File(
             fileId="file124",
@@ -32,7 +36,7 @@ def get_course_files(courseId: str, folder: Optional[str], page: int, limit: int
             path="/Docs/Document.pdf",
             updatedAt="2024-09-07T12:30:00Z",
             size=4096,
-            fileType="pdf"
+            fileType="pdf",
         ),
     ]
     total = len(files)
@@ -53,5 +57,5 @@ def get_file_detail(fileId: str, user: dict) -> Optional[FileDetailResponse]:
         fileId="file123",
         name="Pic.png",
         url="https://thecourseserver.com/files/Pic.png",
-        metaData="LLM-based summary here."
+        metaData="LLM-based summary here.",
     )

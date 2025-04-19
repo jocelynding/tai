@@ -1,7 +1,8 @@
 from typing import Optional
 
-from ..core.security import verify_google_token
 from fastapi import Header
+
+from ..core.security import verify_google_token
 
 
 def get_current_user(authorization: str = Header(...)) -> dict:
@@ -13,7 +14,9 @@ def get_current_user(authorization: str = Header(...)) -> dict:
     return verify_google_token(token)
 
 
-def get_current_user_optional(authorization: Optional[str] = Header(None)) -> Optional[dict]:
+def get_current_user_optional(
+    authorization: Optional[str] = Header(None),
+) -> Optional[dict]:
     """
     Optional dependency. Returns None if no token is provided.
     """

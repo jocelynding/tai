@@ -6,19 +6,24 @@ from concurrent.futures import as_completed
 from pathlib import Path
 from typing import Dict, Type, Union
 
-from rag.file_conversion_router.conversion.base_converter import BaseConverter, ConversionCache
+from rag.file_conversion_router.conversion.base_converter import (
+    BaseConverter,
+    ConversionCache,
+)
+from rag.file_conversion_router.conversion.ed_converter import EdConverter
+from rag.file_conversion_router.conversion.html_converter import HtmlConverter
 from rag.file_conversion_router.conversion.md_converter import MarkdownConverter
 from rag.file_conversion_router.conversion.pdf_converter import PdfConverter
 from rag.file_conversion_router.conversion.rst_converter import RstConverter
 from rag.file_conversion_router.conversion.video_converter import VideoConverter
-from rag.file_conversion_router.conversion.ed_converter import EdConverter
-from rag.file_conversion_router.conversion.html_converter import HtmlConverter
 from rag.file_conversion_router.services.task_manager import schedule_conversion
 from rag.file_conversion_router.utils.logger import content_logger, set_log_file_path
-from rag.file_conversion_router.utils.utils import calculate_hash
 from rag.file_conversion_router.utils.persistent_cache import *
-from rag.file_conversion_router.utils.utils import load_conversion_version, is_empty_md
-
+from rag.file_conversion_router.utils.utils import (
+    calculate_hash,
+    is_empty_md,
+    load_conversion_version,
+)
 
 ConverterMapping = Dict[str, Type[BaseConverter]]
 
@@ -29,13 +34,17 @@ converter_mapping: ConverterMapping = {
     ".rst": RstConverter,
     ".mp4": VideoConverter,
     ".json": EdConverter,
-    ".html": HtmlConverter
+    ".html": HtmlConverter,
     #     TODO: Add more file types and converters here
 }
 
 
-def process_folder(input_dir: Union[str, Path], output_dir: Union[str, Path],
-                   log_dir: Union[str, Path] = None, cache_dir: Union[str, Path] = None) -> None:
+def process_folder(
+    input_dir: Union[str, Path],
+    output_dir: Union[str, Path],
+    log_dir: Union[str, Path] = None,
+    cache_dir: Union[str, Path] = None,
+) -> None:
     """Walk through the input directory and schedule conversion tasks for specified file types.
 
     Args:
@@ -80,11 +89,15 @@ def process_folder(input_dir: Union[str, Path], output_dir: Union[str, Path],
             if cache_dir:
                 file_hash = calculate_hash(input_file_path)
                 if is_empty_md(file_hash):
-                    content_logger.error(f"conversion skipped: found empty markdown file {input_file_path}")
+                    content_logger.error(
+                        f"conversion skipped: found empty markdown file {input_file_path}"
+                    )
                     continue
                 cached_result = persistent_cache.get(file_hash, None)
                 if cached_result and cached_result == conversion_version:
-                    content_logger.info(f"Using persistent cached result version {conversion_version} for {input_file_path}")
+                    content_logger.info(
+                        f"Using persistent cached result version {conversion_version} for {input_file_path}"
+                    )
                     continue
                 else:
                     persistent_cache[file_hash] = conversion_version
@@ -99,11 +112,17 @@ def process_folder(input_dir: Union[str, Path], output_dir: Union[str, Path],
             converter_class = converter_mapping.get(input_file_path.suffix)
             if converter_class:
                 converter = converter_class()
-                future = schedule_conversion(converter.convert, input_file_path, output_file_path)
+                future = schedule_conversion(
+                    converter.convert, input_file_path, output_file_path
+                )
                 futures.append(future)
-                logging.info(f"Scheduled conversion for {input_file_path} to {output_file_path}")
+                logging.info(
+                    f"Scheduled conversion for {input_file_path} to {output_file_path}"
+                )
             else:
-                logging.warning(f"No converter available for file type {input_file_path.suffix}")
+                logging.warning(
+                    f"No converter available for file type {input_file_path.suffix}"
+                )
 
     for future in as_completed(futures):
         try:
@@ -120,4 +139,6 @@ def process_folder(input_dir: Union[str, Path], output_dir: Union[str, Path],
         save_persistent_cache(persistent_cache, cache_dir / cache_file_name)
     content_logger.info(f"Completed content checking for directory: {input_dir}")
     logging.info(f"Completed processing for directory: {input_dir}")
-    logging.info(f"Saved conversion time [{ConversionCache.calc_total_savings()} seconds] by using cached results.")
+    logging.info(
+        f"Saved conversion time [{ConversionCache.calc_total_savings()} seconds] by using cached results."
+    )

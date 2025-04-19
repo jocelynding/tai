@@ -13,17 +13,18 @@ def verify_google_token(token: str) -> dict:
     """
     try:
         # Verify the token against Google's public keys
-        idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), GOOGLE_CLIENT_ID)
+        idinfo = id_token.verify_oauth2_token(
+            token, google_requests.Request(), GOOGLE_CLIENT_ID
+        )
         # Optionally, you can verify additional claims (e.g., hosted domain, expiry)
         return {
             "user_id": idinfo["sub"],
             "email": idinfo["email"],
             "name": idinfo.get("name"),
-            "picture": idinfo.get("picture")
+            "picture": idinfo.get("picture"),
         }
     except ValueError:
         # Token is invalid or expired
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Google token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Google token"
         )

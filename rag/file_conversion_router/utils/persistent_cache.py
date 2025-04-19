@@ -1,5 +1,5 @@
-import pickle
 import os
+import pickle
 
 
 def save_persistent_cache(data, cache_path):
@@ -20,5 +20,3 @@ def load_persistent_cache(cache_path):
 def dummy_convert(in_path, out_path):
     with open(out_path, "a") as f:
         f.write(in_path.stem + "\n")
-
-

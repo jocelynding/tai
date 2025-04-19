@@ -1,9 +1,10 @@
-import numpy as np
 from time import time
+
+import numpy as np
 from PIL import Image as PILImage
-from wand.image import Image as WandImage
-from wand.color import Color
 from transformers import NougatProcessor, VisionEncoderDecoderModel
+from wand.color import Color
+from wand.image import Image as WandImage
 
 
 def get_model_and_processor(model_name):
