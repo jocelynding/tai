@@ -1,8 +1,12 @@
+from rag.scraper.Scraper_master.configs import (
+    GeneralTaskConfig,
+    RstTaskConfig,
+    VideoTaskConfig,
+)
+from rag.scraper.Scraper_master.drivers.playwright_driver import PlaywrightDriver
+from rag.scraper.Scraper_master.drivers.requests_driver import RequestsDriver
 from rag.scraper.Scraper_master.scrapers.general_scraper import GeneralScraper
 from rag.scraper.Scraper_master.scrapers.scrape_vid import VideoScraper
-from rag.scraper.Scraper_master.drivers.requests_driver import RequestsDriver
-from rag.scraper.Scraper_master.drivers.playwright_driver import PlaywrightDriver
-from rag.scraper.Scraper_master.configs import GeneralTaskConfig, RstTaskConfig, VideoTaskConfig
 
 
 class ScraperFactory:

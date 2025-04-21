@@ -1,16 +1,15 @@
-from app.core.models.chat_completion import *
 from datetime import datetime
+
+from app.core.models.chat_completion import *
+
 # Create a ChatCompletionMessage object
 fake_message = ChatCompletionMessage(
-    text="This is a fake response content.",
-    role="system"
+    text="This is a fake response content.", role="system"
 )
 
-fake_choices = [ChatCompletionChoice(
-    index=i,
-    text=f"{i}",
-    logprobs=0.95
-) for i in range(2)]
+fake_choices = [
+    ChatCompletionChoice(index=i, text=f"{i}", logprobs=0.95) for i in range(2)
+]
 
 fake_choices.append(
     ChatCompletionChoice(
@@ -21,15 +20,11 @@ fake_choices.append(
 )
 
 # Create a list of ChatCompletionChoice objects for ChatCompletionChoices
-fake_choices = ChatCompletionChoices(
-    choices=fake_choices
-)
+fake_choices = ChatCompletionChoices(choices=fake_choices)
 
 # Create a ChatCompletionUsage object
 fake_usage = ChatCompletionUsage(
-    completion_tokens="45",
-    prompt_tokens="15",
-    total_tokens="60"
+    completion_tokens="45", prompt_tokens="15", total_tokens="60"
 )
 
 # Finally, create the ChatCompletionResponse object
@@ -39,5 +34,5 @@ fake_response = ChatCompletionResponse(
     id="fake_id_123",
     model="text-davinci-003",
     object="chat",
-    usage=fake_usage
+    usage=fake_usage,
 )

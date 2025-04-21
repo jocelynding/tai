@@ -3,20 +3,19 @@ import json
 import torch
 import transformers
 
-from .remote_model import RemoteModelClient
 from ..config import settings
+from .remote_model import RemoteModelClient
 
 
 def get_local_model_pipeline():
-    """Loads the local text generation model for inference.
-    """
+    """Loads the local text generation model for inference."""
     model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
     device = 0 if torch.cuda.is_available() else -1
     pipeline = transformers.pipeline(
         "text-generation",
         model=model_id,
         model_kwargs={"torch_dtype": torch.bfloat16},
-        device=device
+        device=device,
     )
     return pipeline
 

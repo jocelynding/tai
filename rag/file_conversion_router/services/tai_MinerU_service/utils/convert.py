@@ -1,11 +1,13 @@
+import collections
+import json
 from pathlib import Path
-from magic_pdf.data.data_reader_writer import FileBasedDataWriter, FileBasedDataReader
+
+import yaml
+from magic_pdf.config.enums import SupportedPdfParseMethod
+from magic_pdf.data.data_reader_writer import FileBasedDataReader, FileBasedDataWriter
 from magic_pdf.data.dataset import PymuDocDataset
 from magic_pdf.model.doc_analyze_by_custom_model import doc_analyze
-from magic_pdf.config.enums import SupportedPdfParseMethod
-import json
-import collections
-import yaml
+
 
 def process_pdf(pdf_path: Path, output_dir: Path):
     """
@@ -17,7 +19,9 @@ def process_pdf(pdf_path: Path, output_dir: Path):
     """
     # Ensure pdf_path and output_dir are Path objects
     pdf_path = pdf_path.resolve()
-    output_dir = output_dir.resolve().parent  # Ensure output_dir is the parent directory
+    output_dir = (
+        output_dir.resolve().parent
+    )  # Ensure output_dir is the parent directory
 
     # Extract the PDF file name (without extension)
     output_name = pdf_path.stem
@@ -29,7 +33,6 @@ def process_pdf(pdf_path: Path, output_dir: Path):
     # Create required directories if they do not exist
     for directory in [output_dir, images_dir, markdown_dir]:
         directory.mkdir(parents=True, exist_ok=True)
-
 
     # Create file writers
     image_writer = FileBasedDataWriter(str(images_dir))
@@ -60,15 +63,17 @@ def process_pdf(pdf_path: Path, output_dir: Path):
 
     # Export structured JSON data
     content_list = pipe_result.get_content_list("images")
-    pipe_result.dump_content_list(md_writer, json_dir / f"{output_name}_content_list.json", "images")
+    pipe_result.dump_content_list(
+        md_writer, json_dir / f"{output_name}_content_list.json", "images"
+    )
 
     md_file_path = markdown_dir / f"{output_name}.md"
     json_file_path = json_dir / f"{output_name}_content_list.json"
 
-    with open(md_file_path, 'r', encoding='utf-8') as f_md:
+    with open(md_file_path, "r", encoding="utf-8") as f_md:
         md_content = f_md.read()
 
-    with open(json_file_path, 'r', encoding='utf-8') as f_json:
+    with open(json_file_path, "r", encoding="utf-8") as f_json:
         json_list = json.load(f_json)
 
     # Create a defaultdict to group items by page index
@@ -78,7 +83,7 @@ def process_pdf(pdf_path: Path, output_dir: Path):
         pages[page_idx].append(item)
 
     # Read Markdown content as a list of lines
-    md_lines = md_content.split('\n')
+    md_lines = md_content.split("\n")
 
     # List to store structured page info
     pages_start_lines = []
@@ -100,14 +105,16 @@ def process_pdf(pdf_path: Path, output_dir: Path):
 
         # Append structured data to the list
         if page_start_line is not None:
-            pages_start_lines.append({'page_num': page_idx, 'start_line': page_start_line})
+            pages_start_lines.append(
+                {"page_num": page_idx, "start_line": page_start_line}
+            )
 
     # Define YAML file path
-    yaml_file_path = md_file_path.with_name(md_file_path.stem + '_page_info.yaml')
+    yaml_file_path = md_file_path.with_name(md_file_path.stem + "_page_info.yaml")
 
     # Save structured page info to YAML
-    with open(yaml_file_path, 'w', encoding='utf-8') as f_yaml:
-        yaml.safe_dump({'pages': pages_start_lines}, f_yaml, allow_unicode=True)
+    with open(yaml_file_path, "w", encoding="utf-8") as f_yaml:
+        yaml.safe_dump({"pages": pages_start_lines}, f_yaml, allow_unicode=True)
 
     # Print the formatted YAML output
-    print(yaml.safe_dump({'pages': pages_start_lines}, allow_unicode=True))
+    print(yaml.safe_dump({"pages": pages_start_lines}, allow_unicode=True))

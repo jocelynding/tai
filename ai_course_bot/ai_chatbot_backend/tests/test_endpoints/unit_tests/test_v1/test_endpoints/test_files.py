@@ -13,7 +13,15 @@ def test_get_course_files_valid_course(client_unit):
     assert isinstance(files, list)
     if files:
         file = files[0]
-        for key in ["fileId", "name", "isDirectory", "path", "updatedAt", "size", "fileType"]:
+        for key in [
+            "fileId",
+            "name",
+            "isDirectory",
+            "path",
+            "updatedAt",
+            "size",
+            "fileType",
+        ]:
             assert key in file
 
 

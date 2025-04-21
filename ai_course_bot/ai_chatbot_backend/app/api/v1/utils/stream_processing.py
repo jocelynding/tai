@@ -1,15 +1,15 @@
 import json
-from typing import Tuple, List, Any
+from typing import Any, List, Tuple
 
 
 def extract_text_and_references(generator_response: Any) -> Tuple[str, List[str]]:
     """
     Process the generator of JSON strings from generate_chat_response.
     Aggregates token messages into full text and extracts references from the final message.
-    
+
     Args:
         generator_response: A generator that yields JSON strings with token or final messages
-        
+
     Returns:
         Tuple containing:
         - full_text: The aggregated text from all token messages

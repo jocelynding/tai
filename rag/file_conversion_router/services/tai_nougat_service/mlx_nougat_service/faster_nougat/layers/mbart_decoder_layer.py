@@ -1,7 +1,9 @@
-import torch
+from typing import Optional, Tuple
+
 import mlx.core as mx
 import mlx.nn as nn
-from typing import Optional, Tuple
+import torch
+
 from ..convert import convert
 from .mbart_attention import MBartDecoderAttention
 

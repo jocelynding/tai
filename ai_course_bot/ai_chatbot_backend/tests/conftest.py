@@ -1,10 +1,12 @@
 import os
+
 os.environ["ENVIRONMENT"] = "test"
 # Supported LLM_MODE: local, mock, remote
 os.environ["LLM_MODE"] = "mock"
 
 import pytest
 from app.api.deps import get_current_user
+
 # from app.core.actions.llama_seletor import embedding_model
 from fastapi.testclient import TestClient
 from main import app
@@ -68,7 +70,9 @@ def cs61a_quick_question():
 
 @pytest.fixture
 def tai_trivia_question():
-    return """What is UC Berkeley TAI (Teaching Assistant Intelligence) project about?"""
+    return (
+        """What is UC Berkeley TAI (Teaching Assistant Intelligence) project about?"""
+    )
 
 
 @pytest.fixture
