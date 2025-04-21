@@ -1,12 +1,13 @@
-import pytest
 import os
-import time
 import shutil
+import time
+from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, Future
 
-from rag.file_conversion_router.utils.conversion_cache import ConversionCache
+import pytest
+
 from rag.file_conversion_router.conversion.base_converter import BaseConverter
+from rag.file_conversion_router.utils.conversion_cache import ConversionCache
 from rag.file_conversion_router.utils.utils import calculate_hash
 
 
@@ -19,15 +20,16 @@ class TestConverter(BaseConverter):
 
     def _to_markdown(self, input_path, output_path):
         """Simple implementation that just copies the file content to markdown"""
-        with open(input_path, 'r') as f:
+        with open(input_path, "r") as f:
             content = f.read()
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(f"# Converted from {input_path.name}\n\n{content}")
 
         # Create a pickle file as well (BaseConverter expects both files)
-        with open(output_path.with_suffix('.pkl'), 'wb') as f:
+        with open(output_path.with_suffix(".pkl"), "wb") as f:
             import pickle
+
             pickle.dump({"content": content}, f)
 
     def _to_page(self, input_path, output_path):
@@ -77,13 +79,13 @@ def test_files(tmp_path):
     file3.parent.mkdir(parents=True, exist_ok=True)
 
     # Write content to files
-    with open(file1, 'w') as f:
+    with open(file1, "w") as f:
         f.write("Content of file1")
 
-    with open(file2, 'w') as f:
+    with open(file2, "w") as f:
         f.write("Content of file2")
 
-    with open(file3, 'w') as f:
+    with open(file3, "w") as f:
         f.write("Content of file3")
 
     return input_dir, [file1, file2, file3]
@@ -143,7 +145,7 @@ class TestConversionCacheWithConverter:
         assert pkl_file2.exists()
 
         # Check content is the same
-        with open(md_file1, 'r') as f1, open(md_file2, 'r') as f2:
+        with open(md_file1, "r") as f1, open(md_file2, "r") as f2:
             assert f1.read() == f2.read()
 
         # Check cache access count
@@ -215,7 +217,7 @@ class TestConversionCacheWithConverter:
 
         # Modify the file
         time.sleep(0.1)  # Ensure modification time is different
-        with open(file1, 'w') as f:
+        with open(file1, "w") as f:
             f.write("Modified content of file1")
 
         # Get the file hash after modification
@@ -231,7 +233,7 @@ class TestConversionCacheWithConverter:
         md_file1 = output1 / f"{file1.stem}.md"
         md_file2 = output2 / f"{file1.stem}.md"
 
-        with open(md_file1, 'r') as f1, open(md_file2, 'r') as f2:
+        with open(md_file1, "r") as f1, open(md_file2, "r") as f2:
             content1 = f1.read()
             content2 = f2.read()
             assert content1 != content2

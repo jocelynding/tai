@@ -111,8 +111,14 @@ class BaseConverter(ABC):
 
         file_hash = calculate_hash(input_path)
         cached_paths = self.cache.get_cached_paths(file_hash)
-        same_version = self.cache.version == ConversionCache.get_file_conversion_version(file_hash)
-        if cached_paths and all(Path(path).exists() for path in cached_paths) and same_version:
+        same_version = (
+            self.cache.version == ConversionCache.get_file_conversion_version(file_hash)
+        )
+        if (
+            cached_paths
+            and all(Path(path).exists() for path in cached_paths)
+            and same_version
+        ):
             self._logger.info(
                 f"Cached result found, using cached files for input path: {input_path} "
                 f"in output folder: {output_folder}."
@@ -176,8 +182,12 @@ class BaseConverter(ABC):
         # This method embeds the abstract method `_to_markdown`, which needs to be implemented by the child classes.
         _, conversion_time = self._perform_conversion(input_path, output_folder)
         paths = [self._md_path, self._pkl_path]
-        assert all(path.exists() for path in paths), "Not all output files were generated."
-        self.cache.set_cache_and_time(file_hash, str(input_path), paths, conversion_time)
+        assert all(
+            path.exists() for path in paths
+        ), "Not all output files were generated."
+        self.cache.set_cache_and_time(
+            file_hash, str(input_path), paths, conversion_time
+        )
         logger.info(f"cached into {self.cache._cache_file_path}")
 
     def _use_cached_files(self, cached_paths: List[Path], output_folder: Path) -> None:
@@ -193,7 +203,9 @@ class BaseConverter(ABC):
             path = Path(path)
             # Prevent self-copying if source and destination are identical
             if path.resolve() == des_path.resolve():
-                self._logger.info(f"Skipping self-copy: {path} is already in {output_folder}.")
+                self._logger.info(
+                    f"Skipping self-copy: {path} is already in {output_folder}."
+                )
                 continue
 
             des_path = Path(copy2(path, output_folder))

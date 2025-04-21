@@ -71,10 +71,11 @@ def traverse_files(path, start_folder_name, url_list, id_list, doc_list):
                     print(chunk.chunk_url)
                     url = "URLs:\n" + "\n".join(chunk.chunk_url)
                     url_list.append(url)
-                    file_paths_list.append(relative_file_path)  # Add the relative file path with root folder
+                    file_paths_list.append(
+                        relative_file_path
+                    )  # Add the relative file path with root folder
 
     return url_list, id_list, doc_list, file_paths_list
-
 
 
 def embedding_create(markdown_path, name, embedding_name, folder_name, model):
@@ -165,4 +166,10 @@ def validate_data(data):
 
 
 if __name__ == "__main__":
-    embedding_create("/Users/lihaichao/Documents/TAI/tai/rag/file_conversion_router/services/output_files", "about", "cs61a", "pickle", "BGE")
+    embedding_create(
+        "/Users/lihaichao/Documents/TAI/tai/rag/file_conversion_router/services/output_files",
+        "about",
+        "cs61a",
+        "pickle",
+        "BGE",
+    )
