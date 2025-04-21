@@ -1,6 +1,7 @@
-from playwright.sync_api import sync_playwright
-import requests
 from pathlib import Path
+
+import requests
+from playwright.sync_api import sync_playwright
 
 from .driver import Driver, Resp
 
@@ -33,8 +34,8 @@ class PlaywrightDriver(Driver):
         """
         response = requests.get(url, stream=True)
         response.raise_for_status()
-        content_type = response.headers.get('content-type', '').lower()
-        if 'text/html' in content_type:
+        content_type = response.headers.get("content-type", "").lower()
+        if "text/html" in content_type:
             resp = self._page.goto(url)
             html_content = self._page.content()
             with open(f'{filename.split(".")[0]}.html', "w", encoding="utf-8") as f:
@@ -45,7 +46,7 @@ class PlaywrightDriver(Driver):
                 true_url=resp.url,
             )
         else:
-            with open(filename, 'wb') as file:
+            with open(filename, "wb") as file:
                 for chunk in response.iter_content(chunk_size=8192):
                     file.write(chunk)
             return Resp(

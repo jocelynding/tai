@@ -1,7 +1,7 @@
-import torch
 import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
+import torch
 
 
 def deconvert(mlx_module):

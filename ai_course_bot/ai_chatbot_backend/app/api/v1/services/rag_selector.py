@@ -1,13 +1,13 @@
 import json
-from threading import Thread, Lock
+from threading import Lock, Thread
 from typing import Any, Generator, List, Optional, Tuple
 
 import transformers
 from app.api.v1.services.rag_retriever import (
-    clean_path,
-    _get_reference_documents,
     _get_pickle_and_class,
-    embedding_model
+    _get_reference_documents,
+    clean_path,
+    embedding_model,
 )
 from app.core.models.chat_completion import Message
 from pydantic import BaseModel
@@ -24,7 +24,9 @@ def is_local_pipeline(pipeline: Any) -> bool:
     return hasattr(pipeline, "tokenizer") and pipeline.tokenizer is not None
 
 
-def generate_text_in_thread(messages: List[Message], streamer_iterator: Any, pipeline: Any = None) -> None:
+def generate_text_in_thread(
+    messages: List[Message], streamer_iterator: Any, pipeline: Any = None
+) -> None:
     """
     Generate text via a local Hugging Face pipeline in a background thread.
     Uses tokenizer-based prompt generation if available; otherwise calls the pipeline with raw text.
@@ -35,27 +37,26 @@ def generate_text_in_thread(messages: List[Message], streamer_iterator: Any, pip
         if is_local_pipeline(pipeline):
             terminators = [
                 pipeline.tokenizer.eos_token_id,
-                pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")
+                pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>"),
             ]
             prompt = pipeline.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True
+                messages, tokenize=False, add_generation_prompt=True
             )
             pipeline(
                 prompt,
                 max_new_tokens=1000,
                 eos_token_id=terminators,
                 do_sample=True,
-                streamer=streamer_iterator
+                streamer=streamer_iterator,
             )
         else:
             prompt = messages[-1].content
             pipeline(prompt, max_new_tokens=1000, do_sample=True)
 
 
-def build_augmented_prompt(user_message: str, course: str, embedding_dir: str, threshold: float, rag: bool
-                           ) -> Tuple[str, List[str], str]:
+def build_augmented_prompt(
+    user_message: str, course: str, embedding_dir: str, threshold: float, rag: bool
+) -> Tuple[str, List[str], str]:
     """
     Build an augmented prompt by retrieving reference documents.
     Returns:
@@ -72,7 +73,9 @@ def build_augmented_prompt(user_message: str, course: str, embedding_dir: str, t
     query_embed = embedding_model.encode(
         user_message, return_dense=True, return_sparse=True, return_colbert_vecs=True
     )
-    top_ids, top_docs, top_urls, similarity_scores = _get_reference_documents(query_embed, current_dir, picklefile)
+    top_ids, top_docs, top_urls, similarity_scores = _get_reference_documents(
+        query_embed, current_dir, picklefile
+    )
 
     insert_document = ""
     reference_list: List[str] = []
@@ -86,10 +89,10 @@ def build_augmented_prompt(user_message: str, course: str, embedding_dir: str, t
             cleaned = clean_path(top_ids[i])
             if top_urls[i]:
                 insert_document += (
-                    f"\"\"\"Reference Number: {n}\n"
+                    f'"""Reference Number: {n}\n'
                     f"Reference Info Path: {top_ids[i]}\n"
                     f"Reference_Url: {top_urls[i]}\n"
-                    f"Document: {top_docs[i]}\"\"\"\n\n"
+                    f'Document: {top_docs[i]}"""\n\n'
                 )
                 reference_string += (
                     f"Reference {n}: <|begin_of_reference_name|>{cleaned}"
@@ -98,10 +101,10 @@ def build_augmented_prompt(user_message: str, course: str, embedding_dir: str, t
                 )
             else:
                 insert_document += (
-                    f"\"\"\"Reference Number: {n}\n"
+                    f'"""Reference Number: {n}\n'
                     f"Reference Info Path: {cleaned}\n"
                     f"Reference_Url: NONE\n"
-                    f"Document: {top_docs[i]}\"\"\"\n\n"
+                    f'Document: {top_docs[i]}"""\n\n'
                 )
                 reference_string += (
                     f"Reference {n}: <|begin_of_reference_name|>{cleaned}"
@@ -137,7 +140,7 @@ def local_parser(stream: Any, reference_string: str) -> Generator[str, None, Non
         result = chunk.replace("<|eot_id|>", "")
         yield result if result is not None else ""
         print(result, end="")
-    ref_block = f'\n\n<|begin_of_reference|>\n\n{reference_string}<|end_of_reference|>'
+    ref_block = f"\n\n<|begin_of_reference|>\n\n{reference_string}<|end_of_reference|>"
     yield ref_block
     print(ref_block)
 
@@ -169,13 +172,13 @@ def format_chat_msg(messages: List[Message]) -> List[Message]:
 
 
 def generate_chat_response(
-        messages: List[Message],
-        stream: bool = True,
-        rag: bool = True,
-        course: Optional[str] = None,
-        embedding_dir: str = "/home/bot/localgpt/tai/ai_course_bot/ai-chatbot-backend/app/embedding/",
-        threshold: float = 0.45,
-        pipeline: Any = None
+    messages: List[Message],
+    stream: bool = True,
+    rag: bool = True,
+    course: Optional[str] = None,
+    embedding_dir: str = "/home/bot/localgpt/tai/ai_course_bot/ai-chatbot-backend/app/embedding/",
+    threshold: float = 0.45,
+    pipeline: Any = None,
 ) -> Tuple[Any, str]:
     """
     Build an augmented message with references and run LLM inference.
@@ -187,8 +190,12 @@ def generate_chat_response(
     )
     messages[-1].content = modified_message
     if is_local_pipeline(pipeline):
-        streamer_iterator = transformers.TextIteratorStreamer(pipeline.tokenizer, skip_prompt=True)
-        t = Thread(target=generate_text_in_thread, args=(messages, streamer_iterator, pipeline))
+        streamer_iterator = transformers.TextIteratorStreamer(
+            pipeline.tokenizer, skip_prompt=True
+        )
+        t = Thread(
+            target=generate_text_in_thread, args=(messages, streamer_iterator, pipeline)
+        )
         t.start()
         return streamer_iterator, reference_string
     else:
@@ -197,14 +204,14 @@ def generate_chat_response(
 
 
 def rag_json_stream_generator(
-        messages: List[Message],
-        stream: bool = True,
-        rag: bool = True,
-        course: Optional[str] = None,
-        # TODO: Revise the default embedding_dir path. And put it into the environment variable for best practice.
-        embedding_dir: str = "/home/bot/localgpt/tai/ai_course_bot/ai-chatbot-backend/app/embedding/",
-        threshold: float = 0.45,
-        pipeline: Any = None
+    messages: List[Message],
+    stream: bool = True,
+    rag: bool = True,
+    course: Optional[str] = None,
+    # TODO: Revise the default embedding_dir path. And put it into the environment variable for best practice.
+    embedding_dir: str = "/home/bot/localgpt/tai/ai_course_bot/ai-chatbot-backend/app/embedding/",
+    threshold: float = 0.45,
+    pipeline: Any = None,
 ) -> Generator[str, None, None]:
     """
     Build an augmented message with references and produce a JSON streaming response.
@@ -215,8 +222,12 @@ def rag_json_stream_generator(
     )
     messages[-1].content = modified_message
     if is_local_pipeline(pipeline):
-        streamer_iterator = transformers.TextIteratorStreamer(pipeline.tokenizer, skip_prompt=True)
-        t = Thread(target=generate_text_in_thread, args=(messages, streamer_iterator, pipeline))
+        streamer_iterator = transformers.TextIteratorStreamer(
+            pipeline.tokenizer, skip_prompt=True
+        )
+        t = Thread(
+            target=generate_text_in_thread, args=(messages, streamer_iterator, pipeline)
+        )
         t.start()
 
         def stream_json_response() -> Generator[str, None, None]:
